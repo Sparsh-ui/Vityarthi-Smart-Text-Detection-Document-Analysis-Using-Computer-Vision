@@ -1,185 +1,136 @@
 # Smart Text Detection & Document Analysis Using Computer Vision
 
-## 1. Overview
+A Python-based command-line Computer Vision application that extracts text from images, evaluates OCR confidence, assesses image quality, and exports structured results. It uses OpenCV preprocessing and EasyOCR and is designed for CPU execution.
 
-This is a command-line Computer Vision application that extracts text from images and evaluates OCR reliability and image quality. The pipeline loads an input image, applies a sequence of preprocessing steps to improve clarity, runs Optical Character Recognition (OCR) to detect and recognize text regions, computes confidence statistics and image-quality metrics, and exports the results as structured data files.
+## Problem Statement
 
-The application is built with Python, OpenCV, and EasyOCR, and is designed to run on a standard CPU without requiring GPU hardware.
+OCR accuracy drops with noise, blur, uneven lighting, low contrast, and complex backgrounds. This project improves the input image before OCR and combines text detection with confidence and image-quality analysis so users can judge the reliability of extracted text.
 
-## 2. Problem Statement
+## Objectives & Features
 
-Extracting reliable text from images is a common requirement in document digitization, accessibility, and automated data entry. Real-world images are frequently affected by noise, uneven lighting, low contrast, and blur — all of which degrade OCR accuracy.
+- Preprocess images using resizing, grayscale conversion, Gaussian denoising, CLAHE contrast enhancement, and optional adaptive thresholding.
+- Detect and recognize printed text with EasyOCR, returning bounding boxes, text, and confidence scores.
+- Analyze OCR confidence using mean, minimum, maximum, and low-confidence counts.
+- Measure image brightness, contrast, and Laplacian-based sharpness with Good/Moderate/Poor interpretation.
+- Generate annotated images with confidence-based bounding boxes and labels.
+- Export human-readable TXT and structured JSON reports.
+- Provide a scriptable `argparse` CLI with no GUI requirement.
 
-This project addresses the problem by implementing an image preprocessing pipeline that improves text clarity before OCR, combined with confidence analysis and image-quality assessment to help users understand the reliability of the extracted results.
+## Computer Vision Techniques
 
-## 3. Objectives
+| Technique | Implementation / Purpose |
+|---|---|
+| Image validation | `cv2.imread`; supports JPEG, PNG, BMP, TIFF, WebP |
+| Resizing | Images above 2000 px on the largest dimension are scaled with `INTER_AREA`, preserving aspect ratio |
+| Grayscale | `cv2.cvtColor` converts BGR to a single intensity channel |
+| Gaussian filtering | `cv2.GaussianBlur`, 3×3 kernel, reduces high-frequency noise |
+| CLAHE | `cv2.createCLAHE` improves local contrast under uneven lighting |
+| Adaptive thresholding | Optional `cv2.adaptiveThreshold` for varying backgrounds |
+| OCR | EasyOCR detects text regions and recognizes characters |
+| Visualization | `cv2.polylines` and `cv2.putText` draw boxes and labels |
+| Brightness | `np.mean` of grayscale pixels, 0–255 scale |
+| Contrast | `np.std` of grayscale pixel intensities |
+| Sharpness | Variance of `cv2.Laplacian`; higher values generally indicate sharper images |
 
-- Apply image preprocessing techniques (resizing, grayscale conversion, noise reduction, contrast enhancement, thresholding) to improve OCR input quality
-- Detect and recognize text regions in images using EasyOCR
-- Analyze OCR confidence scores to identify reliable and unreliable detections
-- Assess image quality through brightness, contrast, and sharpness metrics
-- Generate annotated visualizations showing detected text regions with confidence labels
-- Export structured results in plain-text and JSON formats
-- Provide a fully scriptable command-line interface requiring no GUI
+> Image-quality values are practical heuristic indicators, not scientifically validated or standardized quality scores.
 
-## 4. Features
-
-- **Image Preprocessing Pipeline** — resizing, grayscale conversion, Gaussian noise reduction, CLAHE contrast enhancement, and optional adaptive thresholding
-- **Text Detection and OCR** — EasyOCR-based text recognition with configurable language and confidence threshold
-- **Confidence Analysis** — statistical summary of detection confidence (mean, min, max) with low-confidence flagging
-- **Image Quality Assessment** — brightness, contrast, and Laplacian-based sharpness metrics with qualitative interpretation (Good / Moderate / Poor)
-- **Result Visualization** — annotated output image with color-coded bounding boxes (green for high confidence, orange for low confidence)
-- **Structured Export** — plain-text report listing detected regions, and a JSON report containing all results, metrics, and metadata
-- **Command-Line Interface** — fully scriptable with `argparse`; supports options for language, threshold, and preprocessing mode
-
-## 5. Computer Vision Techniques Used
-
-### Image Loading and Validation
-
-The image is loaded using `cv2.imread` and validated for existence and decodability. Supported formats include JPEG, PNG, BMP, TIFF, and WebP.
-
-### Resizing
-
-Images whose largest dimension exceeds 2000 pixels are scaled down while preserving aspect ratio, using `cv2.resize` with `INTER_AREA` interpolation.
-
-### Grayscale Conversion
-
-The image is converted from BGR to a single-channel intensity image using `cv2.cvtColor`, reducing computational cost for subsequent processing steps.
-
-### Gaussian Filtering
-
-A Gaussian blur (`cv2.GaussianBlur`) with a 3×3 kernel is applied to reduce high-frequency pixel noise without significantly degrading text edges.
-
-### CLAHE (Contrast Limited Adaptive Histogram Equalization)
-
-Local contrast is enhanced using `cv2.createCLAHE`. Unlike global histogram equalization, CLAHE operates on small tiles to preserve local detail, which improves text visibility in unevenly lit documents.
-
-### Adaptive Thresholding (Optional)
-
-When enabled via the `--preprocess` flag, `cv2.adaptiveThreshold` converts the image to binary using locally computed thresholds, which is useful for documents with varying background intensity.
-
-### EasyOCR Text Detection and Recognition
-
-The `easyocr.Reader` detects text regions and recognizes characters, returning bounding-box coordinates, recognized text strings, and confidence scores. The reader is cached at module level to avoid re-initializing the model on repeated calls.
-
-### Bounding-Box Visualization
-
-Detected text regions are drawn on a copy of the original image using `cv2.polylines` for bounding boxes and `cv2.putText` for labels. High-confidence and low-confidence detections use different colors for quick visual assessment.
-
-### Brightness Calculation
-
-Mean pixel intensity of the grayscale image, computed with `np.mean`, serves as a brightness indicator on a 0–255 scale.
-
-### Contrast Calculation
-
-Standard deviation of grayscale pixel intensities, computed with `np.std`, serves as a contrast indicator.
-
-### Laplacian-Based Sharpness Measurement
-
-The variance of the Laplacian (`cv2.Laplacian`) measures the presence of edges. Higher variance indicates a sharper image; low variance suggests blur.
-
-> **Note:** The image-quality metrics are practical heuristic indicators, not scientifically validated quality scores.
-
-## 6. Technologies Used
+## Tech Stack
 
 | Technology | Purpose |
 |---|---|
-| Python 3.8+ | Core programming language |
-| OpenCV | Image loading, preprocessing, drawing, and quality analysis |
-| NumPy | Array operations and statistical calculations |
-| EasyOCR | Text detection and optical character recognition |
-| pytest | Unit testing framework |
-| argparse | Command-line argument parsing |
+| Python 3.8+ | Core language |
+| OpenCV | Image processing, visualization, quality analysis |
+| NumPy | Array operations and statistics |
+| EasyOCR | Text detection and OCR |
+| pytest | Unit testing |
+| argparse | CLI argument parsing |
 
-## 7. Project Architecture
+## Project Structure
 
 ```
 smart-text-detection/
-├── main.py                      # CLI entry point — orchestrates the full pipeline
+├── main.py                    # CLI entry point and pipeline orchestration
 ├── src/
 │   ├── __init__.py
-│   ├── preprocessing.py         # Image loading, validation, resizing, and preprocessing
-│   ├── text_detection.py        # EasyOCR wrapper with cached reader and structured output
-│   ├── confidence_analysis.py   # Statistical analysis of OCR confidence scores
-│   ├── image_quality.py         # Brightness, contrast, and sharpness assessment
-│   ├── visualization.py         # Annotated image generation with bounding boxes
-│   ├── result_export.py         # JSON and TXT report generation
-│   └── utils.py                 # Directory, filename, and formatting utilities
-├── tests/                       # Unit tests (pytest)
-├── samples/                     # Sample input images
-├── scripts/                     # Helper scripts (sample image generation)
-├── output/                      # Generated results (gitignored except .gitkeep)
-├── report/                      # Project report directory
-├── statement.md                 # Problem statement and project scope
-├── requirements.txt             # Python dependencies
-└── README.md                    # Project documentation
+│   ├── preprocessing.py       # Validation, resizing, grayscale, denoise, CLAHE, thresholding
+│   ├── text_detection.py      # Cached EasyOCR reader and structured OCR output
+│   ├── confidence_analysis.py # OCR confidence statistics and low-confidence flags
+│   ├── image_quality.py       # Brightness, contrast, sharpness, quality interpretation
+│   ├── visualization.py       # Bounding boxes and confidence labels
+│   ├── result_export.py       # TXT and JSON report generation
+│   └── utils.py               # Directory, filename, path, dimension, formatting helpers
+├── tests/                     # pytest unit tests
+├── samples/                   # Sample input images
+├── scripts/                   # Helper/sample-generation scripts
+├── output/                    # Generated results (gitignored except .gitkeep)
+├── report/                    # Project report
+├── statement.md               # Problem statement and project scope
+├── requirements.txt           # Dependencies
+└── README.md                  # Documentation
 ```
 
-### Module Responsibilities
+### Module Details
 
-- **`preprocessing.py`** — Loads and validates images, then runs a configurable pipeline: resize → grayscale → denoise → contrast enhance → (optional) adaptive threshold. Each step is an independent, testable function.
-- **`text_detection.py`** — Wraps EasyOCR with a module-level cached reader to avoid model re-initialization. Returns structured dictionaries with bounding boxes, text, and confidence scores, sorted top-to-bottom.
-- **`confidence_analysis.py`** — Computes summary statistics (mean, min, max, low-confidence count) from detection confidence scores. Uses a configurable threshold (default 0.5) to flag unreliable detections.
-- **`image_quality.py`** — Computes brightness, contrast, and Laplacian sharpness from the input image. Returns a qualitative interpretation (Good / Moderate / Poor) alongside raw numeric metrics.
-- **`visualization.py`** — Draws polygonal bounding boxes and text labels on a copy of the input image. Uses green for high-confidence and orange for low-confidence detections.
-- **`result_export.py`** — Serializes results to a JSON report (structured data with metadata) and a TXT file (human-readable list of detected text regions).
-- **`utils.py`** — Shared helpers for directory creation, image path validation, filename sanitization, dimension formatting, and percentage formatting.
+- **preprocessing.py:** Runs resize → grayscale → Gaussian denoise → CLAHE → optional adaptive threshold. Steps are independently testable.
+- **text_detection.py:** Uses a module-level cached EasyOCR reader and returns bounding boxes, text, and confidence scores sorted top-to-bottom.
+- **confidence_analysis.py:** Calculates mean/min/max confidence and low-confidence counts using a configurable threshold (analysis default 0.5).
+- **image_quality.py:** Calculates brightness, contrast, and Laplacian sharpness and assigns Good/Moderate/Poor quality.
+- **visualization.py:** Annotates the original image with polygonal bounding boxes and text labels; high- and low-confidence detections use different colors.
+- **result_export.py:** Writes structured JSON and human-readable TXT results.
+- **utils.py:** Handles directories, image paths, filename sanitization, dimensions, and percentage formatting.
 
-## 8. System Workflow
+## System Workflow
 
 ```
 Input Image
-     ↓
-Image Validation         — Verify file exists and format is supported
-     ↓
-Image Preprocessing      — Resize → Grayscale → Denoise → CLAHE → (Threshold)
-     ↓
-Image Quality Analysis   — Compute brightness, contrast, and sharpness metrics
-     ↓
-OCR Text Detection       — Run EasyOCR to detect and recognize text regions
-     ↓
-Confidence Analysis      — Compute statistics and flag low-confidence results
-     ↓
-Result Visualization     — Draw annotated bounding boxes on the original image
-     ↓
-TXT + JSON Export        — Write detected text and full analysis report to files
+    ↓
+Validation & Format Check
+    ↓
+Preprocessing
+Resize → Grayscale → Gaussian Denoise → CLAHE → Optional Threshold
+    ↓
+Image Quality Analysis
+Brightness + Contrast + Sharpness
+    ↓
+EasyOCR Text Detection & Recognition
+Bounding Boxes + Text + Confidence
+    ↓
+Confidence Analysis
+Statistics + Low-Confidence Flags
+    ↓
+Visualization
+Annotated Bounding Boxes + Labels
+    ↓
+TXT + JSON Export
 ```
 
-1. **Image Validation** — The input file path is checked for existence and format support before loading.
-2. **Image Preprocessing** — The loaded image passes through a sequential pipeline of resizing, grayscale conversion, Gaussian noise reduction, and CLAHE contrast enhancement. Adaptive thresholding is applied if requested.
-3. **Image Quality Analysis** — Brightness, contrast, and sharpness are computed from the original image and a qualitative interpretation is assigned.
-4. **OCR Text Detection** — EasyOCR processes the preprocessed image and returns detected text regions with bounding boxes and confidence scores. Results below the confidence threshold are filtered out.
-5. **Confidence Analysis** — Summary statistics are computed from the detection confidence scores, and detections below 50% confidence are flagged.
-6. **Result Visualization** — Bounding boxes and labels are drawn on a copy of the original image with color coding by confidence level.
-7. **TXT + JSON Export** — A plain-text file lists detected text regions, and a JSON file contains the complete analysis report including detections, confidence statistics, and quality metrics.
+Detections below the configured OCR threshold are filtered from the final results; detections below 50% confidence are flagged for reliability analysis.
 
-## 9. Installation
+## Installation
 
 ```bash
-# Create a virtual environment
 python -m venv .venv
 
-# Activate the virtual environment
-# Windows:
+# Windows
 .venv\Scripts\activate
-# Linux/macOS:
+
+# Linux/macOS
 source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-> **Note:** The first time EasyOCR runs, it will download the required language model files. An internet connection is needed for this initial download only.
+EasyOCR downloads its language model the first time it runs, so an internet connection is required for the initial model download. Tests do not require the EasyOCR model or internet access.
 
-## 10. Running the Project
+## Running the Project
 
-### Generate the sample document image (first time only)
+Generate the sample document image:
 
 ```bash
 python scripts/create_sample.py
 ```
 
-### Run the text detection pipeline
+Run the pipeline:
 
 ```bash
 python main.py --input samples/sample_document.jpg --output output
@@ -189,85 +140,86 @@ python main.py --input samples/sample_document.jpg --output output
 
 | Argument | Default | Description |
 |---|---|---|
-| `--input`, `-i` | *(required)* | Path to the input image file |
-| `--output`, `-o` | `output` | Output directory for results |
+| `--input`, `-i` | Required | Input image path |
+| `--output`, `-o` | `output` | Output directory |
 | `--lang`, `-l` | `en` | OCR language code(s), comma-separated |
-| `--threshold`, `-t` | `0.25` | Minimum confidence threshold for including a detection |
-| `--preprocess`, `-p` | off | Enable adaptive thresholding during preprocessing |
+| `--threshold`, `-t` | `0.25` | Minimum confidence for including a detection |
+| `--preprocess`, `-p` | Off | Enables adaptive thresholding |
 
-### Example with all options
+Example:
 
 ```bash
 python main.py --input photo.png --output results --lang en --threshold 0.3 --preprocess
 ```
 
-## 11. Output Files
+## Output Files
 
-Running the pipeline generates three files in the output directory:
-
-| File | Description |
+| File | Contents |
 |---|---|
-| `detected_text.txt` | Human-readable list of detected text regions with confidence scores and bounding-box coordinates |
-| `analysis_report.json` | Structured JSON report containing all detections, confidence statistics, image-quality metrics, and metadata |
-| `annotated_image.jpg` | Copy of the input image with bounding boxes, text labels, and confidence percentages drawn on it |
+| `detected_text.txt` | Detected text regions, confidence scores, and bounding-box coordinates |
+| `analysis_report.json` | Detections, confidence statistics, quality metrics, metadata, and input information |
+| `annotated_image.jpg` | Original image with color-coded bounding boxes, text labels, and confidence percentages |
 
-## 12. Testing
+The terminal also prints the number of detected regions, confidence statistics, image-quality assessment, and output paths.
+
+## Testing
 
 ```bash
 pytest -q
 ```
 
-The test suite validates:
+Tests cover:
 
-- **Preprocessing functions** — correct grayscale conversion, noise reduction, contrast enhancement, and thresholding behaviour using synthetic test images
-- **Confidence analysis** — correct computation of summary statistics (mean, min, max, low-confidence count) using mock detection data
-- **Image quality metrics** — correct brightness, contrast, and sharpness calculations using images with known properties
-- **Result export** — correct JSON structure, TXT formatting, and content accuracy for both populated and empty detection results
+- Preprocessing: grayscale conversion, denoising, contrast enhancement, and thresholding using synthetic images.
+- Confidence analysis: mean, min, max, and low-confidence counts using mock detections.
+- Image quality: brightness, contrast, and sharpness using images with known properties.
+- Result export: JSON structure, TXT formatting, and populated/empty detection cases.
 
-All tests use synthetic images and mock data. No EasyOCR model download or internet connection is required to run the test suite.
+## Limitations
 
-## 13. Limitations
+- OCR accuracy depends strongly on resolution, blur, lighting, and image quality.
+- Handwritten text is less reliably recognized than printed text.
+- Stylized/decorative fonts may reduce recognition accuracy.
+- Text over complex photographic backgrounds can be difficult to detect.
+- CPU-only execution is slower for large images.
+- Image-quality metrics are heuristic and are not calibrated against ground truth or a standardized quality framework.
 
-- **OCR accuracy depends on image quality.** Blurry, low-resolution, or poorly lit images produce significantly worse results.
-- **Handwritten text** is poorly recognized by EasyOCR compared to printed text.
-- **Stylized or decorative fonts** may not be recognized accurately.
-- **Complex backgrounds** (e.g., text overlaid on photographs) reduce detection accuracy.
-- **CPU-only execution** — the project is configured without GPU acceleration, which makes OCR slower on large images.
-- **Image-quality metrics are heuristic indicators**, not calibrated against any ground truth or standardized quality assessment framework.
+## Future Enhancements
 
-## 14. Future Enhancements
+- Batch processing of multiple images
+- Paragraph/text-region grouping by spatial proximity
+- PDF input with page-by-page extraction
+- Per-language accuracy benchmarking using labeled data
+- Spell checking and formatting post-processing
+- Rotated text detection and angle correction
 
-- Add support for batch processing of multiple images
-- Implement text region grouping by spatial proximity (paragraph detection)
-- Add PDF input support with page-by-page extraction
-- Add per-language accuracy benchmarking with labeled test data
-- Implement basic text post-processing (spell checking, formatting)
-- Support rotated text detection with angle correction
+## Academic Relevance
 
-## 15. Academic Relevance
+The project demonstrates core Computer Vision concepts including:
 
-This project demonstrates practical application of core Computer Vision concepts:
+- Image preprocessing and filtering
+- Histogram/contrast enhancement using CLAHE
+- Edge-based analysis using the Laplacian operator
+- Adaptive thresholding
+- Object detection and recognition through deep-learning-based OCR
+- Bounding-box visualization
+- Statistical confidence and image-quality analysis
 
-- **Image Preprocessing** — applying grayscale conversion, Gaussian filtering, and contrast enhancement to prepare images for downstream analysis
-- **Histogram Equalization** — using CLAHE to improve local contrast in unevenly lit images
-- **Edge Detection** — applying the Laplacian operator to measure image sharpness
-- **Thresholding** — using adaptive thresholding to binarize images for improved text separation
-- **Object Detection and Recognition** — leveraging deep-learning-based OCR to locate and recognize text regions
-- **Visualization** — annotating images with bounding boxes and labels to present detection results visually
-- **Statistical Analysis** — computing confidence and quality metrics to evaluate system performance
+These techniques relate directly to image formation/preprocessing, filtering, enhancement, thresholding, feature extraction, and recognition topics in a Computer Vision curriculum.
 
-These techniques connect directly to image processing, filtering, enhancement, and feature extraction topics covered in the Computer Vision curriculum.
-
-## 16. Project Execution Example
+## Example Execution
 
 ```bash
 python main.py --input samples/sample_document.jpg --output output
 ```
 
-Expected output files after execution:
+Expected results:
 
-- `output/detected_text.txt` — lists each detected text region with its confidence score and bounding-box coordinates
-- `output/analysis_report.json` — contains the complete analysis report including input metadata, all text detections, confidence statistics, and image-quality metrics
-- `output/annotated_image.jpg` — the original image annotated with color-coded bounding boxes and confidence labels
+```
+output/
+├── detected_text.txt
+├── analysis_report.json
+└── annotated_image.jpg
+```
 
-The terminal also prints a formatted summary showing the number of detected regions, confidence statistics, image-quality assessment, and the paths of the generated output files.
+The TXT file contains detected regions and confidence scores; the JSON file contains the complete analysis and metadata; and the annotated image shows detected text regions visually.
